@@ -13,7 +13,44 @@ import os
 ###
 # Routing for your application.
 ###
+from flask import jsonify, request
+from werkzeug.utils import secure_filename
+import os
+from .forms import MovieForm
+from .models import Movie
+from .views import form_errors
 
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    form = MovieForm()
+
+    if form.validate_on_submit():
+        # Save the movie to the database
+        movie = Movie(
+            title=form.title.data,
+            description=form.description.data
+        )
+        db.session.add(movie)
+        db.session.commit()
+
+        # Save the uploaded poster file
+        poster = form.poster.data
+        filename = secure_filename(poster.filename)
+        poster.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # Prepare the JSON response
+        response = {
+            'message': 'Movie Successfully added',
+            'title': movie.title,
+            'poster': filename,
+            'description': movie.description
+        }
+        return jsonify(response), 200
+    else:
+        errors = form_errors(form)
+        response = {'errors': errors}
+        return jsonify(response), 400
+    
 @app.route('/')
 def index():
     return jsonify(message="This is the beginning of our API")
