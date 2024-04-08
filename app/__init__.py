@@ -5,3 +5,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 from app import views
+
+from flask_wtf.csrf import CSRFProtect
+app = Flask(__name__)
+csrf = CSRFProtect(app)
